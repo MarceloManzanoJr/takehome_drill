@@ -88,17 +88,32 @@ def test_update_student(test_client):
         assert updated_student.first_name == "Updated Name"
 
 def test_delete_student(test_client):
-    student = Student.query.first()
-    response = test_client.delete(f'/api/students/{student.id}')
+    # Ensure at least one student exists
+    student = Student(
+        student_number="2022-8-0098",
+        first_name="John",
+        last_name="Doe",
+        middle_name="A",
+        sex="Male",
+        birthday="2000-01-01"
+    )
+    db.session.add(student)
+    db.session.commit()
+
+    student_to_delete = Student.query.first()
+    assert student_to_delete is not None, "No students found in the database!"
+
+    response = test_client.delete(f'/api/students/{student_to_delete.id}')
     assert response.status_code == 200
     data = json.loads(response.data)
     assert data['success'] is True
     assert data['data'] == "Student deleted successfully."
-
-    response = test_client.get(f'/api/students/{student.id}')
+  
+    response = test_client.get(f'/api/students/{student_to_delete.id}')
     assert response.status_code == 404
     data = json.loads(response.data)
     assert data['success'] is False
+
 
 def test_create_student_missing_field(test_client):
     new_student = {
