@@ -65,6 +65,59 @@ def get_student(student_id):
         }
     ), HTTPStatus.OK
 
+@app.route("/api/students", methods=["POST"])
+def create_student():
+    try:
+        data = request.get_json()
+    except Exception:
+        return jsonify({
+            "success": False,
+            "error": "Invalid JSON format."
+        }), HTTPStatus.BAD_REQUEST
+    
+    required_fields = ["student_number", "first_name", "last_name", "sex", "birthday"]
+    for field in required_fields:
+        if field not in data:
+            return jsonify(
+                {
+                    "success": False,
+                    "error": f"Missing required field: {field}",
+                }
+            ), HTTPStatus.BAD_REQUEST
+
+    if data['sex'] not in ['Male', 'Female']:
+        return jsonify({
+            "success": False,
+            "error": "Invalid value for 'sex'. Allowed values are 'Male' or 'Female'."
+        }), HTTPStatus.BAD_REQUEST
+
+    try:
+        birthday = datetime.strptime(data['birthday'], '%Y-%m-%d').date()
+    except ValueError:
+        return jsonify({
+            "success": False,
+            "error": "Invalid date format for 'birthday'. Expected 'YYYY-MM-DD'."
+        }), HTTPStatus.BAD_REQUEST
+
+    new_student = Student(
+        student_number=data['student_number'],
+        first_name=data['first_name'],
+        last_name=data['last_name'],
+        middle_name=data.get('middle_name', None), 
+        sex=data['sex'], 
+        birthday=birthday
+    )
+
+    db.session.add(new_student)
+    db.session.commit()
+
+    return jsonify(
+        {
+            "success": True,
+            "data": new_student.to_dict(),
+        }
+    ), HTTPStatus.CREATED
+
 @app.errorhandler(404)
 def not_found(error):
     return jsonify(
