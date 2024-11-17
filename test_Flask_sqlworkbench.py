@@ -99,3 +99,16 @@ def test_delete_student(test_client):
     assert response.status_code == 404
     data = json.loads(response.data)
     assert data['success'] is False
+
+def test_create_student_missing_field(test_client):
+    new_student = {
+        "first_name": "Mike",
+        "last_name": "Johnson",
+        "sex": "Male",
+        "birthday": "2001-03-03"
+    }
+    response = test_client.post('/api/students', json=new_student)
+    assert response.status_code == 400
+    data = json.loads(response.data)
+    assert data['success'] is False
+    assert "Missing required field" in data['error']
