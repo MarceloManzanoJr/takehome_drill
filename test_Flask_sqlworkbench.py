@@ -87,3 +87,15 @@ def test_update_student(test_client):
         updated_student = Student.query.get(student_id)
         assert updated_student.first_name == "Updated Name"
 
+def test_delete_student(test_client):
+    student = Student.query.first()
+    response = test_client.delete(f'/api/students/{student.id}')
+    assert response.status_code == 200
+    data = json.loads(response.data)
+    assert data['success'] is True
+    assert data['data'] == "Student deleted successfully."
+
+    response = test_client.get(f'/api/students/{student.id}')
+    assert response.status_code == 404
+    data = json.loads(response.data)
+    assert data['success'] is False
