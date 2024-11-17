@@ -54,3 +54,36 @@ def test_get_single_student(test_client):
     data = json.loads(response.data)
     assert data['success'] is True
     assert data['data']['first_name'] == "Jamaica"
+
+def test_update_student(test_client):
+    with app.app_context():
+        student = Student(
+            student_number="2023-9-0001",
+            first_name="Original Name",
+            last_name="Doe",
+            middle_name="A",
+            sex="Male",
+            birthday="2000-01-01"
+        )
+        db.session.add(student)
+        db.session.commit()
+
+        student_id = student.id
+
+    update_data = {
+        "first_name": "Updated Name"
+    }
+
+
+    response = test_client.put(f'/api/students/{student_id}', json=update_data)
+
+    assert response.status_code == 200
+    data = response.get_json()
+    assert data['success'] is True
+    assert data['data']['first_name'] == "Updated Name"
+
+
+    with app.app_context():
+        updated_student = Student.query.get(student_id)
+        assert updated_student.first_name == "Updated Name"
+
