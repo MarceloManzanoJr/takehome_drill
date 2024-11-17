@@ -55,6 +55,35 @@ def create_book():
     books.append(new_book)
     return jsonify({"success": True, "data": new_book}), HTTPStatus.CREATED
 
+@app.route("/api/books/<int:book_id>", methods=["PUT"])
+def update_book(book_id):
+    book = find_book(book_id)
+    if book is None:
+        return jsonify({"success": False, "error": "Book not found"}), HTTPStatus.NOT_FOUND
+
+    data = request.get_json()
+    if not data:
+        return jsonify({"success": False, "error": "No data found. Provide data to update the book."}), HTTPStatus.BAD_REQUEST
+
+    for key in ["title", "author", "year"]:
+        if key in data:
+            book[key] = data[key]
+
+    return jsonify({"success": True, "data": book}), HTTPStatus.OK
+
+@app.route("/api/books/<int:book_id>", methods=["DELETE"])
+def delete_book(book_id):
+    book = find_book(book_id)
+    if book is None:
+        return jsonify({"success": False, "error": "Book not found"}), HTTPStatus.NOT_FOUND
+
+    books.remove(book)
+    return '', HTTPStatus.NO_CONTENT
+
+@app.errorhandler(404)
+def not_found(error):
+    return jsonify({"success": False, "error": "Resource not found"}), HTTPStatus.NOT_FOUND
+
 @app.errorhandler(500)
 def internal_server_error(error):
     app.logger.error(f"Server Error: {error}")
