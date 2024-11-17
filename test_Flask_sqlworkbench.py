@@ -36,3 +36,21 @@ def test_create_student(test_client):
     data = json.loads(response.data)
     assert data['successs'] is True
     assert data['data']['student_number'] == "2022-8-0097"
+
+def test_get_single_student(test_client):
+    student = Student(
+        student_number="2022-8-2114",
+        first_name="Jamaica",
+        last_name="Magbanua",
+        middle_name="C",
+        sex="Famale",
+        birthday="2004-08-23"
+    )
+    db.session.add(student)
+    db.session.commit()
+
+    response = test_client.get(f'/api/students/{student.id}')
+    assert response.status_code == 200
+    data = json.loads(response.data)
+    assert data['success'] is True
+    assert data['data']['first_name'] == "Jamaica"
