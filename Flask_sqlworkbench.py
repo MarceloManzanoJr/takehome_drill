@@ -118,6 +118,71 @@ def create_student():
         }
     ), HTTPStatus.CREATED
 
+@app.route("/api/students/<int:student_id>", methods=["PUT"])
+def update_student(student_id):
+    student = Student.query.get(student_id)
+
+    if student is None: 
+        return jsonify(
+            {
+                "success": False,
+                "error":"Student not found"
+            }
+        ), HTTPStatus.NOT_FOUND
+    
+    try:
+        data = request.get_json()
+    except Exception:
+        return jsonify({
+            "success": False,
+            "error": "Invalid JSON format."
+        }), HTTPStatus.BAD_REQUEST
+
+    update_fields = ["student_number", "first_name", "last_name", "middle_name", "sex", "birthday"]
+    for key in update_fields:
+        if key in data:
+            if key == 'birthday':
+                try:
+                    setattr(student, key, datetime.strptime(data[key], '%Y-%m-%d').date())
+                except ValueError:
+                    return jsonify({
+                        "success": False,
+                        "error": "Invalid date format for 'birthday'. Expected 'YYYY-MM-DD'."
+                    }), HTTPStatus.BAD_REQUEST
+            else:
+                setattr(student, key, data[key])
+    
+    db.session.commit()
+
+    return jsonify(
+        {
+            "success": True,
+            "data": student.to_dict()
+        }
+    ), HTTPStatus.OK
+
+@app.route("/api/students/<int:student_id>", methods=["DELETE"])
+def delete_student(student_id):
+    student = Student.query.get(student_id)
+
+    if student is None: 
+        return jsonify(
+            {
+                "success": False, 
+                "error": "Student not found."
+            }
+        ), HTTPStatus.NOT_FOUND
+    
+    db.session.delete(student)
+    db.session.commit()
+
+    return jsonify(
+        {
+            "success": True,
+            "data": "Student deleted successfully."
+        }
+    ), HTTPStatus.OK
+
 @app.errorhandler(404)
 def not_found(error):
     return jsonify(
